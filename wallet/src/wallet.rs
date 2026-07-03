@@ -85,7 +85,7 @@ impl Wallet {
             if retries == 0 {
                 return Ok(WaitForTxStatus::Pending);
             }
-            async_std::task::sleep(Duration::from_secs(1)).await
+            tokio::time::sleep(Duration::from_secs(1)).await
         }
     }
 

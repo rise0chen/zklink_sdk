@@ -2,7 +2,7 @@
 use crate::error::TypeError as Error;
 use ethers::types::Address;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use starknet_ff::FieldElement;
+use starknet_core::types::Felt;
 use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use zklink_sdk_utils::serde::{Prefix, ZeroxPrefix};
@@ -145,18 +145,18 @@ impl From<Address> for ZkLinkAddress {
 }
 
 /// starknet address into ZkLinkAddress
-impl From<FieldElement> for ZkLinkAddress {
-    fn from(address: FieldElement) -> Self {
+impl From<Felt> for ZkLinkAddress {
+    fn from(address: Felt) -> Self {
         // starknet address bytes len is 32
         ZkLinkAddress::from(address.to_bytes_be())
     }
 }
 
 /// ZkLinkAddress into Starknet address
-impl From<ZkLinkAddress> for FieldElement {
+impl From<ZkLinkAddress> for Felt {
     fn from(zk_address: ZkLinkAddress) -> Self {
         // starknet address bytes len is 32
-        FieldElement::from_bytes_be(&zk_address.to_fixed_bytes()).unwrap()
+        Felt::from_bytes_be_slice(&zk_address.to_fixed_bytes())
     }
 }
 
@@ -226,19 +226,19 @@ mod tests {
     #[test]
     fn test_address_convert() {
         // zklink address and starknet address convert
-        let starknet_address = FieldElement::from_str(
+        let starknet_address = Felt::from_str(
             "0x3c9a304c229732090db86a0f1db015c08aa99e31bd68352855a910e477063f8",
         )
         .unwrap();
         let zklink_address: ZkLinkAddress = starknet_address.into();
-        let address: FieldElement = zklink_address.into();
+        let address: Felt = zklink_address.into();
         assert_eq!(address, starknet_address);
 
         let zklink_address = ZkLinkAddress::from_str(
             "0x03c9a304c229732090db86a0f1db015c08aa99e31bd68352855a910e477063f8",
         )
         .unwrap();
-        let address: FieldElement = zklink_address.into();
+        let address: Felt = zklink_address.into();
         assert_eq!(address, starknet_address);
 
         // zklink address and eth address convert

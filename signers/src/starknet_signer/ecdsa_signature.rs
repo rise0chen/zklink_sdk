@@ -3,7 +3,7 @@ use super::error::StarkSignerError;
 use crate::starknet_signer::typed_data::TypedData;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_core::crypto::Signature;
-use starknet_core::types::FieldElement;
+use starknet_core::types::Felt;
 use starknet_signers::VerifyingKey;
 use std::fmt;
 use std::fmt::Formatter;
@@ -12,8 +12,8 @@ use zklink_sdk_utils::serde::ZeroPrefixHexSerde;
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Eq, Debug)]
 pub struct StarkEcdsaSignature {
-    pub s: FieldElement,
-    pub r: FieldElement,
+    pub s: Felt,
+    pub r: Felt,
 }
 
 impl StarkEcdsaSignature {
@@ -34,18 +34,16 @@ impl StarkEcdsaSignature {
     pub fn from_hex(s: &str) -> Result<Self, StarkSignerError> {
         let s = s.strip_prefix("0x").unwrap_or(s);
         let bytes = hex::decode(s).map_err(StarkSignerError::invalid_signature)?;
-        Self::from_bytes_be(&bytes)
+        Self::from_bytes_be_slice(&bytes)
     }
 
     pub fn from_rs_str(r: &str, s: &str) -> Result<Self, StarkSignerError> {
-        let r = FieldElement::from_str(r)
-            .map_err(|e| StarkSignerError::InvalidSignature(e.to_string()))?;
-        let s = FieldElement::from_str(s)
-            .map_err(|e| StarkSignerError::InvalidSignature(e.to_string()))?;
+        let r = Felt::from_str(r).map_err(|e| StarkSignerError::InvalidSignature(e.to_string()))?;
+        let s = Felt::from_str(s).map_err(|e| StarkSignerError::InvalidSignature(e.to_string()))?;
         Ok(Self { s, r })
     }
 
-    pub fn from_bytes_be(bytes: &[u8]) -> Result<Self, StarkSignerError> {
+    pub fn from_bytes_be_slice(bytes: &[u8]) -> Result<Self, StarkSignerError> {
         let mut s = [0_u8; 32];
         let mut r = [0_u8; 32];
         if bytes.len() != 64 {
@@ -55,10 +53,8 @@ impl StarkEcdsaSignature {
         }
         r.clone_from_slice(&bytes[0..32]);
         s.clone_from_slice(&bytes[32..]);
-        let s = FieldElement::from_bytes_be(&s)
-            .map_err(|e| StarkSignerError::invalid_signature(e.to_string()))?;
-        let r = FieldElement::from_bytes_be(&r)
-            .map_err(|e| StarkSignerError::invalid_signature(e.to_string()))?;
+        let s = Felt::from_bytes_be_slice(&s);
+        let r = Felt::from_bytes_be_slice(&r);
         Ok(Self { s, r })
     }
 }
@@ -66,7 +62,7 @@ impl StarkEcdsaSignature {
 #[derive(Clone, PartialEq, Eq)]
 pub struct StarkEip712Signature {
     /// starknet public key
-    pub pub_key: FieldElement,
+    pub pub_key: Felt,
     /// starknet signature
     pub signature: StarkEcdsaSignature,
 }
@@ -81,7 +77,7 @@ impl StarkEip712Signature {
         bytes.to_vec()
     }
 
-    pub fn from_bytes_be(bytes: &[u8]) -> Result<Self, StarkSignerError> {
+    pub fn from_bytes_be_slice(bytes: &[u8]) -> Result<Self, StarkSignerError> {
         if bytes.len() != 96 {
             return Err(StarkSignerError::invalid_signature(
                 "bytes length should be equal to 96",
@@ -89,9 +85,8 @@ impl StarkEip712Signature {
         }
         let mut pub_key = [0_u8; 32];
         pub_key.clone_from_slice(&bytes[0..32]);
-        let pub_key = FieldElement::from_bytes_be(&pub_key)
-            .map_err(|_| StarkSignerError::invalid_signature("invalid public key"))?;
-        let signature = StarkEcdsaSignature::from_bytes_be(&bytes[32..])?;
+        let pub_key = Felt::from_bytes_be_slice(&pub_key);
+        let signature = StarkEcdsaSignature::from_bytes_be_slice(&bytes[32..])?;
         Ok(Self { pub_key, signature })
     }
 
@@ -103,14 +98,13 @@ impl StarkEip712Signature {
     pub fn from_hex(s: &str) -> Result<Self, StarkSignerError> {
         let s = s.strip_prefix("0x").unwrap_or(s);
         let bytes = hex::decode(s).map_err(StarkSignerError::invalid_signature)?;
-        Self::from_bytes_be(&bytes)
+        Self::from_bytes_be_slice(&bytes)
     }
 }
 
 impl StarkEip712Signature {
     pub fn verify(&self, msg: &TypedData, addr: &str) -> Result<bool, StarkSignerError> {
-        let addr = FieldElement::from_hex_be(addr)
-            .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
+        let addr = Felt::from_hex(addr).map_err(|e| StarkSignerError::SignError(e.to_string()))?;
         let hash = msg.get_message_hash(addr)?;
         let verifying_key = VerifyingKey::from_scalar(self.pub_key);
         let is_ok = verifying_key
@@ -144,7 +138,8 @@ impl<'de> Deserialize<'de> for StarkEip712Signature {
         D: Deserializer<'de>,
     {
         let bytes = ZeroPrefixHexSerde::deserialize(deserializer)?;
-        let signature: Self = Self::from_bytes_be(&bytes).map_err(serde::de::Error::custom)?;
+        let signature: Self =
+            Self::from_bytes_be_slice(&bytes).map_err(serde::de::Error::custom)?;
         Ok(signature)
     }
 }

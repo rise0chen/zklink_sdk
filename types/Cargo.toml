@@ -11,7 +11,7 @@ hex = { workspace = true }
 num = { workspace = true, features = ["serde"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-starknet-ff = { workspace = true }
+starknet-core = { workspace = true }
 thiserror = { workspace = true }
 validator = { workspace = true, features = ["derive"] }
 wasm-bindgen = { workspace = true, features = ["serde-serialize"] }

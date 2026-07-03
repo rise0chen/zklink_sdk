@@ -19,10 +19,10 @@ hex = { workspace = true }
 serde_json = { workspace = true }
 uniffi = { workspace = true}
 uniffi_macros = { workspace = true, optional = true}
-zklink_sdk_signers = { path = "../../signers", default_features = false,features = ["ffi"] }
-zklink_sdk_types = { path = "../../types", default_features = false, features = ["ffi"] }
-zklink_sdk_interface = { path = "../../interface", default_features = false, features = ["ffi"] }
-zklink_sdk_provider = { path = "../../provider", default_features = false, features = ["ffi"]}
+zklink_sdk_signers = { path = "../../signers", default-features = false,features = ["ffi"] }
+zklink_sdk_types = { path = "../../types", default-features = false, features = ["ffi"] }
+zklink_sdk_interface = { path = "../../interface", default-features = false, features = ["ffi"] }
+zklink_sdk_provider = { path = "../../provider", default-features = false, features = ["ffi"]}
 
 [build-dependencies]
 uniffi_build = { workspace = true, features=["builtin-bindgen"] }

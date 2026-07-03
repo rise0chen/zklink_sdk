@@ -3,7 +3,7 @@ use crate::starknet_signer::ecdsa_signature::StarkEcdsaSignature;
 use crate::starknet_signer::typed_data::TypedData;
 use crate::starknet_signer::StarkEip712Signature;
 use starknet_core::crypto::compute_hash_on_elements;
-use starknet_core::types::FieldElement;
+use starknet_core::types::Felt;
 use starknet_signers::SigningKey;
 
 pub struct StarkSigner(pub SigningKey);
@@ -19,14 +19,14 @@ impl StarkSigner {
         let signing_key = SigningKey::from_random();
         Self(signing_key)
     }
-    pub fn public_key(&self) -> FieldElement {
+    pub fn public_key(&self) -> Felt {
         let verifying_key = self.0.verifying_key();
         verifying_key.scalar()
     }
 
     pub fn new_from_hex_str(hex_str: &str) -> Result<Self, Error> {
         let private_key =
-            FieldElement::from_hex_be(hex_str).map_err(|e| Error::InvalidPrivKey(e.to_string()))?;
+            Felt::from_hex(hex_str).map_err(|e| Error::InvalidPrivKey(e.to_string()))?;
         let signing_key = SigningKey::from_secret_scalar(private_key);
         Ok(Self(signing_key))
     }
@@ -34,7 +34,7 @@ impl StarkSigner {
     /// 1. get the hash of the message
     /// 2. sign hash
     pub fn sign_message(&self, msg: &TypedData, addr: &str) -> Result<StarkEip712Signature, Error> {
-        let addr = FieldElement::from_hex_be(addr).map_err(|e| Error::SignError(e.to_string()))?;
+        let addr = Felt::from_hex(addr).map_err(|e| Error::SignError(e.to_string()))?;
         let hash = msg.get_message_hash(addr)?;
         let signature = self
             .0
@@ -50,13 +50,10 @@ impl StarkSigner {
         Ok(s)
     }
 
-    /// 1. change msg to FieldElement list
-    /// 2. compute hash of the FieldElement list
-    pub fn get_msg_hash(msg: &[u8]) -> FieldElement {
-        let elements: Vec<_> = msg
-            .chunks(32)
-            .map(|val| FieldElement::from_byte_slice_be(val).unwrap())
-            .collect();
+    /// 1. change msg to Felt list
+    /// 2. compute hash of the Felt list
+    pub fn get_msg_hash(msg: &[u8]) -> Felt {
+        let elements: Vec<_> = msg.chunks(32).map(Felt::from_bytes_be_slice).collect();
         compute_hash_on_elements(&elements)
     }
 }

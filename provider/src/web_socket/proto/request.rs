@@ -25,7 +25,7 @@ where
 {
     pub fn to_message(&self) -> Result<Message, serde_json::Error> {
         let s = serde_json::to_string(self)?;
-        let msg = Message::Text(s);
+        let msg = Message::Text(s.into());
         Ok(msg)
     }
 }

@@ -3,7 +3,7 @@ use crate::starknet_signer::typed_data::message::TypedDataMessage;
 use crate::starknet_signer::typed_data::TypedData;
 use crate::starknet_signer::{StarkEcdsaSignature, StarkEip712Signature};
 use crate::RpcErr;
-use starknet_core::types::FieldElement;
+use starknet_core::types::Felt;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -61,7 +61,7 @@ impl StarknetJsonRpcSigner {
 
         let signature = StarkEcdsaSignature::from_rs_str(&signature[0], &signature[1])
             .map_err(|e| StarkSignerError::InvalidSignature(e.to_string()))?;
-        let pub_key = FieldElement::from_str(&self.pub_key)
+        let pub_key = Felt::from_str(&self.pub_key)
             .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
         Ok(StarkEip712Signature { pub_key, signature })
     }

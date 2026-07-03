@@ -6,7 +6,7 @@ use num::{BigUint, Num};
 use serde::{Deserialize, Serialize};
 
 use starknet_core::crypto::compute_hash_on_elements;
-use starknet_core::types::FieldElement;
+use starknet_core::types::Felt;
 use starknet_core::utils::starknet_keccak;
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -149,7 +149,7 @@ impl TypedData {
         &self,
         struct_type: &str,
         data: &M,
-    ) -> Result<FieldElement, StarkSignerError> {
+    ) -> Result<Felt, StarkSignerError> {
         let mut types_array = vec![];
         let mut data_array = vec![];
         types_array.push("felt".to_string());
@@ -168,7 +168,7 @@ impl TypedData {
             types_array.push(t.r#type.clone());
             let v_str = data_map.get(&t.name).unwrap().as_str().unwrap();
             let v = Self::string_to_hex(v_str);
-            let v = FieldElement::from_hex_be(&v)
+            let v = Felt::from_hex(&v)
                 .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
             data_array.push(v);
         }
@@ -176,7 +176,7 @@ impl TypedData {
         Ok(compute_hash_on_elements(&data_array))
     }
 
-    pub fn encode(&self, addr: FieldElement) -> Result<Vec<FieldElement>, StarkSignerError> {
+    pub fn encode(&self, addr: Felt) -> Result<Vec<Felt>, StarkSignerError> {
         let domain = self
             .get_struct_hash("StarkNetDomain", &self.domain)
             .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
@@ -185,11 +185,11 @@ impl TypedData {
             .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
         //StarkNet Message
         let stark_net_message =
-            FieldElement::from_str(&Self::string_to_hex("StarkNet Message")).unwrap();
+            Felt::from_str(&Self::string_to_hex("StarkNet Message")).unwrap();
         Ok(vec![stark_net_message, domain, addr, message])
     }
 
-    pub fn get_message_hash(&self, addr: FieldElement) -> Result<FieldElement, StarkSignerError> {
+    pub fn get_message_hash(&self, addr: Felt) -> Result<Felt, StarkSignerError> {
         let data = self.encode(addr)?;
         Ok(compute_hash_on_elements(&data))
     }

@@ -23,7 +23,7 @@ tokio-tungstenite = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 jsonrpsee = { workspace = true, features = ["macros","jsonrpsee-types","client-core"] }
-getrandom = { workspace = true, features = ["js"] }
+getrandom = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]

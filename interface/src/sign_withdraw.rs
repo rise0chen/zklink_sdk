@@ -96,6 +96,7 @@ mod tests {
     use zklink_sdk_types::basic_types::BigUint;
     use zklink_sdk_types::prelude::*;
 
+    #[cfg(not(feature = "web"))]
     #[test]
     fn test_sign_withdraw() {
         let eth_pk = H256::repeat_byte(5);

@@ -1,5 +1,5 @@
 pub use ethers_primitives::Address as EIP712Address;
-pub use primitive_types::{H160, H256, U256};
+pub use ethers::types::{H160, H256, U256};
 use serde::{Deserialize, Serialize};
 
 pub use eip1271_signature::EIP1271Signature;
