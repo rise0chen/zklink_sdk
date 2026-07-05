@@ -2,10 +2,11 @@ use super::packed_eth_signature::PackedEthSignature;
 use super::EthSignerError;
 
 use crate::eth_signer::{Address, H256};
-use ethers::signers::{LocalWallet, Signer};
-use ethers::types::transaction::eip2718::TypedTransaction;
-use ethers::types::TxHash;
-use ethers::utils::hash_message;
+use alloy::consensus::{Transaction as _, TypedTransaction};
+use alloy::network::TxSignerSync;
+use alloy::primitives::{eip191_hash_message, TxHash};
+use alloy_signer::{Signer, SignerSync};
+use alloy_signer_local::LocalSigner as LocalWallet;
 use k256::ecdsa::SigningKey;
 
 #[derive(Clone)]
@@ -26,25 +27,26 @@ impl EthSigner {
     }
 
     pub fn random() -> Self {
-        Self {
-            private_key: H256::random(),
-        }
+        let mut private_key = [0; 32];
+        getrandom::fill(&mut private_key).unwrap();
+        let private_key = H256::new(private_key);
+        Self { private_key }
     }
 
     /// Get Ethereum address that matches the private key.
     pub fn get_address(&self) -> Address {
-        let key = SigningKey::from_slice(self.private_key.as_bytes()).unwrap();
-        Address::from_slice(LocalWallet::from(key).address().as_bytes())
+        let key = SigningKey::from_slice(self.private_key.as_slice()).unwrap();
+        Address::from_slice(LocalWallet::from(key).address().as_slice())
     }
 
     /// Signs and returns the RLP-encoded transaction.
     pub fn sign_transaction(
         &self,
-        tx: &TypedTransaction,
+        tx: &mut TypedTransaction,
     ) -> Result<PackedEthSignature, EthSignerError> {
-        let key = SigningKey::from_slice(self.private_key.as_bytes()).unwrap();
+        let key = SigningKey::from_slice(self.private_key.as_slice()).unwrap();
         let signed = LocalWallet::from(key)
-            .with_chain_id(tx.chain_id().unwrap_or_default().as_u64())
+            .with_chain_id(tx.chain_id())
             .sign_transaction_sync(tx)
             .map_err(|err| EthSignerError::SigningFailed(err.to_string()))?;
         Ok(PackedEthSignature(signed))
@@ -55,15 +57,15 @@ impl EthSigner {
     /// Signs message using ethereum private key, results are identical to signature created
     /// using `geth`, `ethecore/lib/types/src/gas_counter.rsrs.js`, etc. No hashing and prefixes required.
     pub fn sign_message(&self, msg: &[u8]) -> Result<PackedEthSignature, EthSignerError> {
-        let hash = hash_message(msg);
-        self.sign_hash(hash.as_bytes())
+        let hash = eip191_hash_message(msg);
+        self.sign_hash(hash.as_slice())
     }
 
     pub fn sign_hash(&self, hash: &[u8]) -> Result<PackedEthSignature, EthSignerError> {
         let tx_hash = TxHash::from_slice(hash);
-        let key = SigningKey::from_slice(self.private_key.as_bytes()).unwrap();
+        let key = SigningKey::from_slice(self.private_key.as_slice()).unwrap();
         let signature = LocalWallet::from(key)
-            .sign_hash(tx_hash)
+            .sign_hash_sync(&tx_hash)
             .map_err(|err| EthSignerError::SigningFailed(err.to_string()))?;
         Ok(PackedEthSignature(signature))
     }
@@ -92,12 +94,13 @@ impl From<H256> for EthSigner {
 #[cfg(test)]
 mod test {
     use super::*;
+    use alloy::sol_types::sol;
     use std::str::FromStr;
 
     #[test]
     fn test_eth_signer() {
         let private_key = H256::from([5; 32]);
-        let private_key = hex::encode(private_key.as_bytes());
+        let private_key = hex::encode(private_key.as_slice());
         let signer = EthSigner::try_from(private_key.as_str()).unwrap();
         println!("{signer:?}");
         let msg = b"hello world";
@@ -125,23 +128,23 @@ mod test {
 
     #[test]
     fn test_eth_eip712() {
-        use crate::eth_signer::eip712::eip712::EIP712Domain;
-        use crate::eth_signer::eip712::eip712::TypedData;
-        use crate::eth_signer::EIP712Address;
+        use crate::eth_signer::eip712::EIP712Domain;
+        use crate::eth_signer::eip712::TypedData;
         use serde::{Deserialize, Serialize};
         use serde_json::json;
 
-        #[derive(Debug, Serialize, Deserialize, PartialEq)]
-        struct Person {
-            pub name: String,
-            pub wallet: EIP712Address,
-        }
-
-        #[derive(Debug, Serialize, Deserialize, PartialEq)]
-        struct Mail {
-            pub from: Person,
-            pub to: Person,
-            pub contents: String,
+        sol! {
+            #[derive(Debug, Serialize, Deserialize, PartialEq)]
+            struct Person {
+                string name;
+                address wallet;
+            }
+            #[derive(Debug, Serialize, Deserialize, PartialEq)]
+            struct Mail {
+                Person from;
+                Person to;
+                string contents;
+            }
         }
 
         let private_key = "0xb32593e347bf09436b058fbeabc17ebd2c7c1fa42e542f5f78fc3580faef83b7";

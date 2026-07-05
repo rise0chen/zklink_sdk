@@ -7,12 +7,12 @@ use crate::params::{SIGNED_CHANGE_PUBKEY_BIT_WIDTH, TX_TYPE_BIT_WIDTH};
 use crate::prelude::ChangePubKeyBuilder;
 use crate::tx_type::validator::*;
 use crate::tx_type::{format_units, TxTrait, ZkSignatureTrait};
-use ethers::utils::keccak256;
+use alloy::primitives::keccak256;
+use alloy::sol;
 use num::{BigUint, Zero};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-use zklink_sdk_signers::eth_signer::eip712::eip712::{EIP712Domain, TypedData};
-use zklink_sdk_signers::eth_signer::eip712::{BytesM, Uint};
+use zklink_sdk_signers::eth_signer::eip712::{EIP712Domain, TypedData};
 use zklink_sdk_signers::eth_signer::error::EthSignerError;
 use zklink_sdk_signers::eth_signer::packed_eth_signature::PackedEthSignature;
 use zklink_sdk_signers::eth_signer::EthTypedData;
@@ -32,9 +32,9 @@ pub struct Create2Data {
 }
 
 impl Create2Data {
-    pub fn salt(&self, pubkey_hash: &[u8]) -> [u8; 32] {
+    pub fn salt(&self, pubkey_hash: &[u8]) -> H256 {
         let mut bytes = Vec::new();
-        bytes.extend_from_slice(self.salt_arg.as_bytes());
+        bytes.extend_from_slice(self.salt_arg.as_slice());
         bytes.extend_from_slice(pubkey_hash);
         keccak256(bytes)
     }
@@ -43,8 +43,8 @@ impl Create2Data {
         let mut bytes = Vec::new();
         bytes.push(0xff);
         bytes.extend_from_slice(self.creator_address.as_bytes());
-        bytes.extend_from_slice(&salt);
-        bytes.extend_from_slice(self.code_hash.as_bytes());
+        bytes.extend_from_slice(salt.as_slice());
+        bytes.extend_from_slice(self.code_hash.as_slice());
         ZkLinkAddress::from_slice(&keccak256(bytes)[12..]).unwrap_or_default()
     }
 }
@@ -88,9 +88,9 @@ impl ChangePubKeyAuthData {
             ChangePubKeyAuthData::EthECDSA { eth_signature } => {
                 let mut bytes = Vec::new();
                 bytes.push(0x00);
-                bytes.extend_from_slice(&eth_signature.0.to_vec()[..64]);
+                bytes.extend_from_slice(&eth_signature.0.as_bytes()[..64]);
                 // add 27 to v
-                let mut v = eth_signature.0.to_vec()[64];
+                let mut v = eth_signature.0.as_bytes()[64];
                 if v == 0 || v == 1 {
                     v += 27;
                 }
@@ -101,8 +101,8 @@ impl ChangePubKeyAuthData {
                 let mut bytes = Vec::new();
                 bytes.push(0x01);
                 bytes.extend_from_slice(data.creator_address.as_bytes());
-                bytes.extend_from_slice(data.salt_arg.as_bytes());
-                bytes.extend_from_slice(data.code_hash.as_bytes());
+                bytes.extend_from_slice(data.salt_arg.as_slice());
+                bytes.extend_from_slice(data.code_hash.as_slice());
                 bytes
             }
         }
@@ -255,7 +255,7 @@ impl ChangePubKey {
     ) -> Result<EthTypedData, EthSignerError> {
         let domain =
             EIP712Domain::new_zklink_domain(layer_one_chain_id, verifying_contract.to_string())?;
-        let typed_data = TypedData::<EIP712ChangePubKey>::new(domain, self.into())?;
+        let typed_data = TypedData::new(domain, EIP712ChangePubKey::from(self))?;
         let raw_data = serde_json::to_string(&typed_data)
             .map_err(|e| EthSignerError::CustomError(format!("serialization error: {e:?}")))?;
         let data_hash = typed_data.sign_hash()?;
@@ -267,24 +267,26 @@ impl ChangePubKey {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename = "ChangePubKey", rename_all = "camelCase")]
-pub(crate) struct EIP712ChangePubKey {
-    pub_key_hash: BytesM<20>,
-    nonce: Uint<32>,
-    account_id: Uint<32>,
+sol! {
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename = "ChangePubKey")]
+    struct EIP712ChangePubKey {
+        bytes20 pubKeyHash;
+        uint32 nonce;
+        uint32 accountId;
+    }
 }
 
 impl From<&ChangePubKey> for EIP712ChangePubKey {
     fn from(change_pub_key: &ChangePubKey) -> Self {
-        let pub_key_hash: BytesM<20> = BytesM::from(change_pub_key.new_pk_hash.data);
-        let nonce: Uint<32> = Uint::from(change_pub_key.nonce.0);
-        let account_id: Uint<32> = Uint::from(change_pub_key.account_id.0);
+        let pub_key_hash = change_pub_key.new_pk_hash.data.into();
+        let nonce = change_pub_key.nonce.0;
+        let account_id = change_pub_key.account_id.0;
 
         EIP712ChangePubKey {
-            pub_key_hash,
+            pubKeyHash: pub_key_hash,
             nonce,
-            account_id,
+            accountId: account_id,
         }
     }
 }

@@ -1,6 +1,6 @@
 //! Common primitives for the layer1 blockchain network interaction.
 use crate::error::TypeError as Error;
-use ethers::types::Address;
+use alloy::primitives::Address;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_core::types::Felt;
 use std::fmt::{Debug, Formatter};
@@ -59,7 +59,9 @@ impl ZkLinkAddress {
 
     /// According to Rng, it will randomly generate a ZklinkAddress.
     pub fn random() -> Self {
-        ZkLinkAddress::from(Address::random().to_fixed_bytes())
+        let mut addr = [0; 20];
+        getrandom::fill(&mut addr).unwrap();
+        ZkLinkAddress::from(addr)
     }
 }
 
@@ -140,7 +142,7 @@ impl From<ZkLinkAddress> for Address {
 /// Eth address into ZkLinkAddress
 impl From<Address> for ZkLinkAddress {
     fn from(address: Address) -> Self {
-        ZkLinkAddress::from(address.to_fixed_bytes())
+        ZkLinkAddress::from(address.0 .0)
     }
 }
 
@@ -226,10 +228,9 @@ mod tests {
     #[test]
     fn test_address_convert() {
         // zklink address and starknet address convert
-        let starknet_address = Felt::from_str(
-            "0x3c9a304c229732090db86a0f1db015c08aa99e31bd68352855a910e477063f8",
-        )
-        .unwrap();
+        let starknet_address =
+            Felt::from_str("0x3c9a304c229732090db86a0f1db015c08aa99e31bd68352855a910e477063f8")
+                .unwrap();
         let zklink_address: ZkLinkAddress = starknet_address.into();
         let address: Felt = zklink_address.into();
         assert_eq!(address, starknet_address);

@@ -1,5 +1,4 @@
-pub use ethers_primitives::Address as EIP712Address;
-pub use ethers::types::{H160, H256, U256};
+pub use alloy::primitives::{Address, B256 as H256, U256};
 use serde::{Deserialize, Serialize};
 
 pub use eip1271_signature::EIP1271Signature;
@@ -14,8 +13,6 @@ pub mod error;
 pub mod json_rpc_signer;
 pub mod packed_eth_signature;
 pub mod pk_signer;
-
-pub type Address = H160;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EthTypedData {

@@ -6,7 +6,8 @@ edition = "2021"
 
 [dependencies]
 cfg-if = { workspace = true }
-ethers = { workspace = true }
+alloy = { workspace = true }
+getrandom = { workspace = true }
 hex = { workspace = true }
 num = { workspace = true, features = ["serde"] }
 serde = { workspace = true }

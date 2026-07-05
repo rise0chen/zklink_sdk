@@ -168,8 +168,7 @@ impl TypedData {
             types_array.push(t.r#type.clone());
             let v_str = data_map.get(&t.name).unwrap().as_str().unwrap();
             let v = Self::string_to_hex(v_str);
-            let v = Felt::from_hex(&v)
-                .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
+            let v = Felt::from_hex(&v).map_err(|e| StarkSignerError::SignError(e.to_string()))?;
             data_array.push(v);
         }
 
@@ -184,8 +183,7 @@ impl TypedData {
             .get_struct_hash("Message", &self.message)
             .map_err(|e| StarkSignerError::SignError(e.to_string()))?;
         //StarkNet Message
-        let stark_net_message =
-            Felt::from_str(&Self::string_to_hex("StarkNet Message")).unwrap();
+        let stark_net_message = Felt::from_str(&Self::string_to_hex("StarkNet Message")).unwrap();
         Ok(vec![stark_net_message, domain, addr, message])
     }
 

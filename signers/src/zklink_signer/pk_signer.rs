@@ -1,7 +1,6 @@
 use super::error::ZkSignerError as Error;
 use super::{JUBJUB_PARAMS, RESCUE_PARAMS};
 
-use crate::eth_signer::H256;
 use crate::zklink_signer::public_key::PackedPublicKey;
 use crate::zklink_signer::signature::{PackedSignature, ZkLinkSignature};
 use crate::zklink_signer::utils;
@@ -60,8 +59,7 @@ impl ZkLinkSigner {
         "Sign this message to create a key to interact with zkLink's layer2 services.\nNOTE: This application is powered by zkLink protocol.\n\nOnly sign this message for a trusted client!";
     const STARKNET_SIGN_MESSAGE: &'static str = "Create zkLink's layer2 key.";
     pub fn new() -> Result<Self, Error> {
-        let eth_pk = H256::random();
-        let eth_signer = EthSigner::from(eth_pk);
+        let eth_signer = EthSigner::random();
         let signature = eth_signer.sign_message(Self::SIGN_MESSAGE.as_bytes())?;
         let seed = signature.serialize_packed();
         Self::new_from_seed(&seed)

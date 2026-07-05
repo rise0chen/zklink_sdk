@@ -1,4 +1,4 @@
-use ethers::abi::Contract;
+use alloy::abi::Contract;
 use std::collections::HashMap;
 use std::str::FromStr;
 

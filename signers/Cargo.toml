@@ -5,8 +5,11 @@ edition = "2021"
 publish = false
 
 [dependencies]
-ethers = { workspace = true }
-ethers_primitives =  { workspace = true }
+alloy = { workspace = true }
+alloy-sol-types = { workspace = true }
+alloy-signer = { workspace = true }
+alloy-signer-local = { workspace = true }
+getrandom = { workspace = true }
 franklin-crypto = { workspace = true }
 hex = { workspace = true }
 js-sys = { workspace = true }
@@ -14,7 +17,6 @@ k256 = { workspace = true, features = ["ecdsa","sha256"] }
 num = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 serde-wasm-bindgen = { workspace = true }
-serde_eip712 ={ workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
 starknet-core = { workspace = true }

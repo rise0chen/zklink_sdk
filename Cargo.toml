@@ -1,14 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "bindings/sdk",
-    "bindings/wasm",
-    "interface",
-    "provider",
     "signers",
-    "types",
     "utils",
-    "wallet"
+    "types",
+    "provider",
+    "interface",
 ]
 default-members = [
     "signers",
@@ -16,16 +13,17 @@ default-members = [
     "types",
     "provider",
     "interface",
-    "wallet"
 ]
 
 [workspace.dependencies]
+alloy = { version = "2", default-features = false, features=["serde", "dyn-abi", "eip712", "sol-types", "consensus", "network"]}
+alloy-sol-types = {version = "1", default-features = false}
+alloy-signer = {version = "2", default-features = false}
+alloy-signer-local = {version = "2", default-features = false}
 anyhow = {version = "1", default-features = false}
 bigdecimal = { version = "0.4", default-features = false, features = ["serde"] }
 cfg-if = {version = "1", default-features = false}
 chrono = { version = "0.4", default-features = false, features = ["serde", "now"] }
-ethers = {version = "2", default-features = false}
-ethers_primitives =  {version = "0.2", default-features = false}
 franklin-crypto = { version = "0.0.5", git = "https://github.com/zkLinkProtocol/franklin-crypto.git", branch = "dev" }
 futures = {version = "0.3", default-features = false}
 getrandom = { version = "0.4", default-features = false }
@@ -36,10 +34,9 @@ js-sys = {version = "0.3", default-features = false}
 jsonrpsee = {version = "0.26", default-features = false}
 k256 = { version = "0.13", default-features = false, features = ["ecdsa","sha256"] }
 num = { version = "0.4", default-features = false, features = ["serde"] }
-reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 sha2 = {version = "0.10", default-features = false}
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-serde_eip712 = {version = "0.2", default-features = false}
 serde_json = {version = "1", default-features = false}
 serde-wasm-bindgen = {version = "0.6", default-features = false}
 starknet-core = {version = "0.16", default-features = false}

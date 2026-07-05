@@ -53,7 +53,7 @@ impl GetBytes for Deposit {
         let bytes_len = self.bytes_len();
         let mut out = Vec::with_capacity(bytes_len);
         out.extend_from_slice(&self.serial_id.to_be_bytes());
-        out.extend_from_slice(self.l2_hash.as_bytes());
+        out.extend_from_slice(self.l2_hash.as_slice());
         assert_eq!(out.len(), bytes_len);
         out
     }

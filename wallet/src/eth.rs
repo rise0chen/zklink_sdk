@@ -1,7 +1,7 @@
 use crate::error::WalletError;
-use ethers::abi::{Contract, Token};
-use ethers::core::types::transaction::eip2718::TypedTransaction;
-use ethers::types::{Address, Eip1559TransactionRequest, TransactionRequest, U256};
+use alloy::abi::{Contract, Token};
+use alloy::consensus::{TypedTransaction};
+use alloy::primitives::{Address, Eip1559TransactionRequest, TransactionRequest, U256};
 use serde::{Deserialize, Serialize};
 use zklink_sdk_types::basic_types::BigUint;
 use zklink_sdk_types::prelude::ZkLinkAddress;

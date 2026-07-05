@@ -2,10 +2,10 @@ use crate::abi::load_contracts;
 use crate::error::WalletError;
 use crate::eth::{encode_tx, new_call_typed_tx, new_typed_tx, EthTxOption, EthTxParam};
 use bigdecimal::num_bigint::BigUint;
-use ethers::abi::{Address, Contract, Detokenize, Token, Tokenize, Uint};
-use ethers::contract::encode_function_data;
-use ethers::providers::{Http, Middleware, Provider};
-use ethers::types::BlockNumber;
+use alloy::abi::{Address, Contract, Detokenize, Token, Tokenize, Uint};
+use alloy::contract::encode_function_data;
+use alloy::providers::{Http, Middleware, Provider};
+use alloy::primitives::BlockNumber;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -125,7 +125,7 @@ impl Wallet {
             nonce
         } else {
             self.provider
-                .get_transaction_count(from, Some(ethers::types::BlockNumber::Pending.into()))
+                .get_transaction_count(from, Some(alloy::primitives::BlockNumber::Pending.into()))
                 .await?
         };
 
@@ -154,7 +154,7 @@ impl Wallet {
     ) -> Result<H256, WalletError> {
         let params = vec![
             Token::Address(zklink_addr),
-            Token::Uint(ethers::types::U256::from_str(&amount.to_string()).unwrap()),
+            Token::Uint(alloy::primitives::U256::from_str(&amount.to_string()).unwrap()),
         ];
         let contract = self.contracts.get(&"erc20".to_owned()).unwrap();
         let tx_data = encode_tx(contract.clone(), "approve", params)?;
@@ -177,7 +177,7 @@ impl Wallet {
         bytes[12..].copy_from_slice(deposit_to.as_bytes());
         let params = vec![
             Token::FixedBytes(bytes.to_vec()),
-            Token::Uint(ethers::types::U256::from(sub_account_id)),
+            Token::Uint(alloy::primitives::U256::from(sub_account_id)),
         ];
         let contract = self.get_l1_contract(is_gateway);
         let tx_data = encode_tx(contract.clone(), "depositETH", params)?;
@@ -199,9 +199,9 @@ impl Wallet {
         eth_params: EthTxParam,
     ) -> Result<H256, WalletError> {
         let params = vec![
-            Token::Uint(ethers::types::U256::from(account_id)),
-            Token::Uint(ethers::types::U256::from(sub_account_id)),
-            Token::Uint(ethers::types::U256::from(token_id)),
+            Token::Uint(alloy::primitives::U256::from(account_id)),
+            Token::Uint(alloy::primitives::U256::from(sub_account_id)),
+            Token::Uint(alloy::primitives::U256::from(token_id)),
             Token::Bool(mapping),
         ];
         let contract = self.get_l1_contract(false);
@@ -231,9 +231,9 @@ impl Wallet {
         bytes[12..].copy_from_slice(deposit_to.as_bytes());
         let params = vec![
             Token::Address(token_addr),
-            Token::Uint(ethers::types::U256::from_str_radix(&amount.to_string(), 10).unwrap()),
+            Token::Uint(alloy::primitives::U256::from_str_radix(&amount.to_string(), 10).unwrap()),
             Token::FixedBytes(bytes.to_vec()),
-            Token::Uint(ethers::types::U256::from(sub_account_id)),
+            Token::Uint(alloy::primitives::U256::from(sub_account_id)),
             Token::Bool(mapping),
         ];
         let contract = self.get_l1_contract(is_gateway);
@@ -256,7 +256,7 @@ impl Wallet {
         bytes[12..].copy_from_slice(new_pubkey_hash.as_ref());
         let params = vec![
             Token::Bytes(bytes.to_vec()),
-            Token::Uint(ethers::types::U256::from(nonce)),
+            Token::Uint(alloy::primitives::U256::from(nonce)),
         ];
         let contract = self.get_l1_contract(false);
         let tx_data = encode_tx(contract.clone(), "setAuthPubkeyHash", params)?;

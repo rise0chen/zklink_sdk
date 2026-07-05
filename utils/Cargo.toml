@@ -6,5 +6,5 @@ edition = "2021"
 
 [dependencies]
 hex = { workspace = true }
-num = { workspace = true, features = ["serde"] }
+num = { workspace = true, features = ["alloc", "serde"] }
 serde = { workspace = true, features = ["derive"] }

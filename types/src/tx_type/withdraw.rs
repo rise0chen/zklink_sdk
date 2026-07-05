@@ -150,7 +150,7 @@ impl GetBytes for Withdraw {
         out.extend_from_slice(&(*self.l1_target_token as u16).to_be_bytes());
         out.extend_from_slice(&self.amount.to_u128().unwrap().to_be_bytes());
         if let Some(data_hash) = self.data_hash {
-            out.extend_from_slice(data_hash.as_bytes())
+            out.extend_from_slice(data_hash.as_slice())
         }
         out.extend_from_slice(&pack_fee_amount(&self.fee));
         out.extend_from_slice(&self.nonce.to_be_bytes());

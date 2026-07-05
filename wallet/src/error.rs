@@ -1,6 +1,6 @@
-use ethers::abi::AbiError;
-use ethers::abi::Error as EthAbiError;
-use ethers::providers::ProviderError;
+use alloy::abi::AbiError;
+use alloy::abi::Error as EthAbiError;
+use alloy::providers::ProviderError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use zklink_sdk_signers::eth_signer::EthSignerError;
